@@ -15,6 +15,6 @@ It is one static file (`index.html`) with no build step and no accounts. Progres
 ## Use it
 
 - **Offline:** open `index.html` in any browser.
-- **Online:** this repo deploys itself to GitHub Pages with `.github/workflows/deploy.yml` on every push to `main`. In *Settings → Pages*, set *Source* to **GitHub Actions** if it is not already.
+- **Online:** in *Settings → Pages*, set *Source* to **Deploy from a branch**, branch **main**, folder **/ (root)**. GitHub republishes the site on every push to `main`.
 
 This path builds literacy in the Islamic sciences. It is not a substitute for qualified scholars when you need a ruling.
