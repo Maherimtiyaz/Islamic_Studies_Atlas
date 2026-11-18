@@ -2,7 +2,7 @@
 
 A structured self-study path through the Islamic sciences, in the classical order: usūl before furūʿ, method before volume, primary texts first.
 
-- **Start here:** practical basics (tajwīd, fiqh of worship, Sīrah, the Forty Ḥadīth, purification of the heart)
+- **Farḍ ʿayn:** what every Muslim must know first (basic creed, purification and prayer, the fiqh of women, fasting, zakāh and ḥajj, ḥalāl and ḥarām, Sīrah, the Forty Ḥadīth)
 - **Year 1 (6 months):** manhaj, ʿaqīdah, uṣūl al-fiqh, ḥadīth sciences, Qurʾānic sciences and tafsīr, then fiqh, history, sects and tazkiyah
 - **Year 2 (4 quarters):** advanced ʿaqīdah, uṣūl, ḥadīth, and Qurʾān/history/tazkiyah
 - **Year 3:** one specialization (fiqh, tafsīr, ʿaqīdah or ḥadīth)
