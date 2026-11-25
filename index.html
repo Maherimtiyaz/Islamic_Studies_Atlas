@@ -230,6 +230,32 @@ aside.toc a:hover,aside.toc a.on{color:var(--fg);border-left-color:var(--fg)}
 .tt-wk-h{font:500 10.5px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin:12px 0 4px}
 .tt-wk{margin:0;padding-left:20px;font:400 calc(var(--fs) - 2.5px)/1.6 var(--serif);color:var(--muted)}
 @media (max-width:860px){.tt-det{margin-left:0}.tt td:first-child{white-space:normal}}
+.muted{color:var(--muted)}
+.tt a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.tree-tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.tree-tools button{border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:6px;padding:5px 11px;cursor:pointer;font-size:13px}
+.tree-tools button:hover{border-color:var(--accent);color:var(--accent)}
+.tree-hint{font-size:13px;color:var(--muted);margin-left:6px}
+.tree-hint a{color:var(--accent)}
+.tree-wrap{height:calc(100vh - 230px);min-height:420px;border:1px solid var(--line);border-radius:8px;overflow:hidden;touch-action:none;cursor:grab;background:var(--bg)}
+.tree-wrap:active{cursor:grabbing}
+.tree-svg{width:100%;height:100%;display:block}
+.tree-svg .tl{fill:none;stroke:var(--line);stroke-width:1.3}
+.tree-svg .td{fill:none;stroke-width:1.8}
+.tree-svg .td.pre{stroke:var(--accent)}
+.tree-svg .td.unl{stroke:var(--accent);stroke-dasharray:5 4;opacity:.8}
+.tree-svg .tn rect{fill:var(--bg);stroke:var(--line)}
+.tree-svg .tn text{fill:var(--fg);font:500 12px var(--sans)}
+.tree-svg .tn.grp rect{fill:var(--hover);stroke:var(--faint)}
+.tree-svg .tn.grp text{font-weight:600}
+.tree-svg .tn .tg{fill:var(--accent);font:600 13px var(--mono)}
+.tree-svg .tn .tk{fill:var(--done)}
+.tree-svg .tn.done rect{fill:var(--accent-weak);stroke:var(--done)}
+.tree-svg .tn.sel rect{stroke:var(--fg);stroke-width:2}
+.tree-svg .tn.pre rect,.tree-svg .tn.unl rect{stroke:var(--accent);stroke-width:1.6}
+.tree-svg .tn{cursor:pointer}
+@media (max-width:860px){.tree-wrap{height:70vh}}
+
 .scrim{display:none}
 @media (max-width:1100px){.page{grid-template-columns:minmax(0,1fr)}aside.toc{display:none}}
 @media (max-width:860px){
@@ -273,9 +299,9 @@ const host=u=>{try{const h=new URL(u).hostname.replace(/^www\./,"");return h.inc
 const hrs=m=>m<60?m+" min":(Math.round(m/30)/2)+" h";
 const K=CONFIG.key;
 let done=store.get(K+".done",{}),fresh={},daily=null,projFilter="All",mapSel=store.get(K+".mapSel",null);
-const T={},ORDER=[];const LANG={en:"English",ar:"Arabic"};const PH=CONFIG.phases;const PL=DATA.playlists||[];const plFor=id=>PL.filter(x=>(x.topics||[]).includes(id));let plLang="all",plSec="all";const SEC=Object.fromEntries((CONFIG.sections||[]).map(x=>[x.id,x]));
+const T={},ORDER=[];const LANG={en:"English",ar:"Arabic",hi:"Hindi"};const PH=CONFIG.phases;const PL=DATA.playlists||[];const plFor=id=>PL.filter(x=>(x.topics||[]).includes(id));let plLang="all",plSec="all";const SEC=Object.fromEntries((CONFIG.sections||[]).map(x=>[x.id,x]));
 DATA.chapters.forEach((c,ci)=>c.topics.forEach((t,ti)=>{T[t.id]={...t,c,ci,ti,ph:c.phase,opt:!!c.optional,num:`${CONFIG.base+ci}.${ti+1}`};ORDER.push(t.id)}));
-const PAR=new Set(CONFIG.parallel||[]);const CORE=ORDER.filter(id=>!T[id].opt&&!PAR.has(T[id].ph));const PARIDS=ORDER.filter(id=>PAR.has(T[id].ph));const nextPar=()=>PARIDS.find(id=>!done[id]);const parVisible=i=>{const w=PH[i].window;if(!w)return true;const c=curPhase();return c>=w[0]&&c<=w[1]};const nextParOf=i=>ORDER.find(id=>T[id].ph===i&&!done[id]);const nextCore=()=>CORE.find(id=>!done[id]);const curPhase=()=>{const n=nextCore();return n?T[n].ph:PH.length-1};const inFocus=ph=>ph===curPhase()||(PAR.has(ph)&&parVisible(ph));let focus=store.get(K+".focus",false);
+const PAR=new Set(CONFIG.parallel||[]);const TR=CONFIG.tracks||null;let track=TR?store.get(K+".track",TR.default):null;const phOrder=()=>TR?TR.list[track].order:PH.map((_,i)=>i).filter(i=>!PH[i].optional);let CORE=[];const computeCore=()=>{const o=phOrder();CORE=ORDER.filter(id=>o.includes(T[id].ph)&&!PAR.has(T[id].ph)).sort((a,b)=>o.indexOf(T[a].ph)-o.indexOf(T[b].ph)||ORDER.indexOf(a)-ORDER.indexOf(b))};computeCore();const isOpt=id=>!phOrder().includes(T[id].ph)&&!PAR.has(T[id].ph);function setTrack(k){track=k;store.set(K+".track",k);computeCore();render()}const PARIDS=ORDER.filter(id=>PAR.has(T[id].ph));const nextPar=()=>PARIDS.find(id=>!done[id]);const parVisible=i=>{const w=PH[i].window;if(!w)return true;const c=curPhase();return c>=w[0]&&c<=w[1]};const nextParOf=i=>ORDER.find(id=>T[id].ph===i&&!done[id]);const nextCore=()=>CORE.find(id=>!done[id]);const curPhase=()=>{const n=nextCore();return n?T[n].ph:PH.length-1};const inFocus=ph=>ph===curPhase()||(PAR.has(ph)&&parVisible(ph));let focus=store.get(K+".focus",false);
 const chNum=ci=>pad(CONFIG.base+ci);
 const unlocks={};ORDER.forEach(id=>T[id].pre.forEach(p=>(unlocks[p]=unlocks[p]||[]).push(id)));
 const depth={};const dep=id=>depth[id]??(depth[id]=T[id].pre.length?1+Math.max(...T[id].pre.map(dep)):0);ORDER.forEach(dep);
@@ -297,7 +323,7 @@ let findQ="";
 function renderIndex(cur){
   const q=findQ.toLowerCase();
   const hit=t=>!q||[t.title,t.why,...t.ideas,...["lectures","papers","reads"].flatMap(k=>t[k].map(r=>r.t+" "+r.by)),...t.projects.map(p=>p.n),...t.repos.map(r=>r.r)].join(" ").toLowerCase().includes(q);
-  const nav=[["","Start here"],["path","My path"],["map","Topic map"],...(CONFIG.daily?[["daily","Daily drop"]]:[]),["projects",L.projects],...(PL.length?[["playlists","Courses & playlists"]]:[]),...(CONFIG.hubs||[]).map(h=>["hub-"+h.id,h.title]),...(CONFIG.sections?[["sections","Sections"]]:[]),...(CONFIG.pages||[]).map(p=>[p.id,p.title]),["courses",CONFIG.coursesLabel]];
+  const nav=[["","Start here"],["path","My path"],["map","Topic map"],...(CONFIG.daily?[["daily","Daily drop"]]:[]),["projects",L.projects],["today","Today"],["tree","Knowledge tree"],...(TR?[["tracks","Floor & Ceiling"]]:[]),...(PL.length?[["playlists","Courses & playlists"]]:[]),...(CONFIG.hubs||[]).map(h=>["hub-"+h.id,h.title]),...(CONFIG.sections?[["sections","Sections"]]:[]),...(CONFIG.pages||[]).map(p=>[p.id,p.title]),["courses",CONFIG.coursesLabel]];
   let h=`<div class="logo">${esc(CONFIG.title)} <small>${esc(CONFIG.tag)}</small></div><input class="find" id="find" type="search" placeholder="${esc(CONFIG.searchHint||"Search topics, papers, repos")}" aria-label="Search" value="${esc(findQ)}"><div class="navtop">`+nav.map(([k,l])=>`<a href="#${k}"${cur===k?' aria-current="page"':""}>${l}</a>`).join("")+`</div>`;
   const cp=curPhase();let lastPh=-1;
   if(focus&&!q)h+=`<p class="focusnote">Focus mode: showing phase ${cp+1} only. <button id="unfocus">Show everything</button></p>`;
@@ -329,7 +355,7 @@ function topicPage(id){
     new:resList(f.map(x=>({t:x.title,u:x.url,by:`${x.date} · ${x.source}`})))};
   return {crumb:`<a href="#">${esc(CONFIG.short)}</a> / Chapter ${chNum(t.ci)} · ${esc(t.c.title)}`,toc:secs,
    html:`<p class="eyebrow">Chapter ${chNum(t.ci)} · ${esc(t.c.title)}</p><h1>${t.num} ${esc(t.title)}</h1><p class="lede">${esc(t.why)}</p>
-   <div class="meta"><span>${PH[t.ph].badge?esc(PH[t.ph].badge):"Phase "+(t.ph+1)}${t.opt?" · Optional":""}</span>${t.section&&SEC[t.section]?`<a href="#sections" class="secchip">${esc(SEC[t.section].title)}</a>`:""}<span>${esc(t.level)}</span><span>about ${hrs(t.mins)}</span><span>${t.lectures.length} ${L.lecShort} · ${t.papers.length} ${CONFIG.papersShort} · ${t.reads.length} ${L.readsShort} · ${t.projects.length} ${L.projShort}</span><label><input type="checkbox" id="doneBox" ${done[id]?"checked":""}> Mark as done</label></div>
+   <div class="meta"><span>${PH[t.ph].badge?esc(PH[t.ph].badge):"Phase "+(t.ph+1)}${isOpt(id)?" · Optional on your track":""}</span>${t.section&&SEC[t.section]?`<a href="#sections" class="secchip">${esc(SEC[t.section].title)}</a>`:""}<span>${esc(t.level)}</span><span>about ${hrs(t.mins)}</span><span>${t.lectures.length} ${L.lecShort} · ${t.papers.length} ${CONFIG.papersShort} · ${t.reads.length} ${L.readsShort} · ${t.projects.length} ${L.projShort}</span><label><input type="checkbox" id="doneBox" ${done[id]?"checked":""}> Mark as done</label></div>
    ${secs.map(([k,l])=>`<h2 id="${k}"><span class="sn">${pad(s(k))}</span>${l}</h2>${body[k]}`).join("")}
    <nav class="pager">${prev?`<a href="#t-${prev.id}"><span>← Previous</span><b>${prev.num} ${esc(prev.title)}</b></a>`:"<span></span>"}${next?`<a class="next" href="#t-${next.id}"><span>Next →</span><b>${next.num} ${esc(next.title)}</b></a>`:"<span></span>"}</nav>`,
    after(){$("#doneBox").onchange=e=>{done[id]=e.target.checked;saveDone();renderIndex("t-"+id)};document.querySelectorAll("[data-sel]").forEach(a=>a.onclick=()=>{mapSel=a.dataset.sel;store.set(K+".mapSel",mapSel)})}};
@@ -405,7 +431,7 @@ function dailyPage(){
 let tocObs=null;
 function render(){
   const h=location.hash.slice(1);let v;
-  if(h.startsWith("t-")&&T[h.slice(2)])v=topicPage(h.slice(2));else if(h==="path")v=pathPage();else if(h==="map")v=mapPage();else if(h==="daily"&&CONFIG.daily)v=dailyPage();else if(h==="projects")v=projectsPage();else if(h==="courses")v=coursesPage();else if(h==="sections"&&CONFIG.sections)v=sectionsPage();else if(h==="playlists"&&PL.length)v=playlistsPage();else if(h.startsWith("hub-")&&(CONFIG.hubs||[]).some(x=>"hub-"+x.id===h))v=hubPage(CONFIG.hubs.find(x=>"hub-"+x.id===h));else if(h==="timetable"){v=timetablePage()}else if((CONFIG.pages||[]).some(p=>p.id===h)){const p=CONFIG.pages.find(p=>p.id===h);v={crumb:`<a href="#">${esc(CONFIG.short)}</a> / ${esc(p.title)}`,wide:false,toc:[],html:p.html}}else v=home();
+  if(h.startsWith("t-")&&T[h.slice(2)])v=topicPage(h.slice(2));else if(h==="path")v=pathPage();else if(h==="map")v=mapPage();else if(h==="daily"&&CONFIG.daily)v=dailyPage();else if(h==="projects")v=projectsPage();else if(h==="courses")v=coursesPage();else if(h==="sections"&&CONFIG.sections)v=sectionsPage();else if(h==="playlists"&&PL.length)v=playlistsPage();else if(h.startsWith("hub-")&&(CONFIG.hubs||[]).some(x=>"hub-"+x.id===h))v=hubPage(CONFIG.hubs.find(x=>"hub-"+x.id===h));else if(h==="timetable"){v=timetablePage()}else if(h==="today"){v=todayPage()}else if(h==="tree"){v=treePage()}else if(h==="tracks"&&TR){v=tracksPage()}else if((CONFIG.pages||[]).some(p=>p.id===h)){const p=CONFIG.pages.find(p=>p.id===h);v={crumb:`<a href="#">${esc(CONFIG.short)}</a> / ${esc(p.title)}`,wide:false,toc:[],html:p.html}}else v=home();
   renderIndex(h);toggleNav(false);
   $("#crumb").innerHTML=v.crumb;
   const pg=$("#page");pg.classList.toggle("wide",!!v.wide||!v.toc.length);
@@ -434,7 +460,7 @@ function phaseStats(i){const ids=ORDER.filter(id=>T[id].ph===i);const dn=ids.fil
 function pathPage(){
   const n=nextCore(),cp=curPhase();
   let h=`<p class="eyebrow">One path, in order</p><h1>My path</h1><p class="lede" style="max-width:64ch">${esc(CONFIG.pathLede)}</p>`;
-  h+=`<ol class="phases">`+PH.map((p,i)=>{const s=phaseStats(i);const state=p.optional?"opt":PAR.has(i)?"now":s.dn===s.ids.length?"done":i===cp?"now":i<cp?"done":"later";
+  const seq=[...phOrder(),...PH.map((_,i)=>i).filter(i=>!phOrder().includes(i))];h+=`<ol class="phases">`+seq.map(i=>[PH[i],i]).map(([p,i])=>{const s=phaseStats(i);const state=(TR?!phOrder().includes(i):p.optional)?"opt":PAR.has(i)?"now":s.dn===s.ids.length?"done":i===cp?"now":i<cp?"done":"later";
     const chs=DATA.chapters.map((c,ci)=>({c,ci})).filter(x=>x.c.phase===i);
     return `<li class="phase ${state}" id="ph-${i}"><div class="ph-hd"><span class="ph-n">${p.badge?esc(p.badge):p.optional?"E":PAR.has(i)?"∥":pad(i+1)}</span><div class="ph-t"><b>${esc(p.title)}</b><span>${esc(p.goal)}</span></div><span class="ph-s">${s.dn}/${s.ids.length} · ${hrs(s.mins)} left</span></div>
     <div class="bar"><i style="width:${s.ids.length?Math.round(100*s.dn/s.ids.length):0}%"></i></div>${(p.teacher||p.amal)?`<p class="ph-note">${p.teacher?`<span><b>With a teacher</b>${esc(p.teacher)}</span>`:""}${p.amal?`<span><b>Amal</b>${esc(p.amal)}</span>`:""}</p>`:""}${p.tt?`<details class="tt-det"><summary>Daily timetable · ${esc(p.tt.total)}</summary>${ttHtml(p)}</details>`:""}
@@ -445,7 +471,7 @@ function pathPage(){
 const _home=home;
 home=function(){
   const v=_home();const n=nextCore(),cp=curPhase();
-  const bars=PH.map((p,i)=>{if(p.optional||PAR.has(i))return"";const s=phaseStats(i);return `<a class="seg2 ${i===cp?"now":""}" href="#path" title="Phase ${i+1}: ${esc(p.title)} (${s.dn}/${s.ids.length})"><i style="height:${s.ids.length?Math.round(100*s.dn/s.ids.length):0}%"></i><span>${i+1}</span></a>`}).join("");
+  const bars=phOrder().map(i=>[PH[i],i]).map(([p,i])=>{if(PAR.has(i))return"";const s=phaseStats(i);return `<a class="seg2 ${i===cp?"now":""}" href="#path" title="Phase ${i+1}: ${esc(p.title)} (${s.dn}/${s.ids.length})"><i style="height:${s.ids.length?Math.round(100*s.dn/s.ids.length):0}%"></i><span>${i+1}</span></a>`}).join("");
   const cont=n?`<div class="continue"><span class="eyebrow" style="margin:0">Continue · Phase ${cp+1}: ${esc(PH[cp].title)}</span><a href="#t-${n}"><b>${T[n].num} ${esc(T[n].title)}</b><span>${esc(T[n].why)}</span></a><span class="muted">about ${hrs(T[n].mins)} · then ${(()=>{const i=CORE.indexOf(n);return CORE.slice(i+1,i+3).map(x=>esc(T[x].short)).join(", ")})()}</span></div>`:`<div class="continue"><b>You've finished the core path.</b></div>`;
   const par=[...PAR].filter(parVisible).map(i=>{const np=nextParOf(i);return np?`<div class="continue alongside"><span class="eyebrow" style="margin:0">Alongside · ${esc(PH[i].title)}</span><a href="#t-${np}"><b>${T[np].num} ${esc(T[np].title)}</b><span>${esc(T[np].why)}</span></a></div>`:""}).join("");
   v.html=v.html.replace('<h2 id="next">',`<div class="phasebar" aria-label="Progress by phase">${bars}</div>${cont}${par}<h2 id="next">`);
@@ -465,11 +491,11 @@ function sectionsPage(){
 
 function plList(a){return `<ul class="list">${a.map(x=>`<li><a href="${esc(x.u)}" target="_blank" rel="noopener"><span class="t" dir="auto">${esc(x.t)}</span><span class="b">${esc(x.by)}${x.text?` · explains <i>${esc(x.text)}</i>`:""}${x.note?`<br>${esc(x.note)}`:""}</span><span class="d"><span class="lang ${esc(x.lang)}">${esc(LANG[x.lang]||x.lang)}</span>${x.eps?` · ${x.eps} videos`:""}${x.level?` · ${esc(x.level)}`:""}</span></a></li>`).join("")}</ul>`}
 function playlistsPage(){
-  const secs=(CONFIG.sections||[]).filter(sx=>PL.some(x=>x.section===sx.id));
+  const secs=(CONFIG.plGroups||CONFIG.sections||[]).filter(sx=>PL.some(x=>x.section===sx.id));
   const list=PL.filter(x=>(plLang==="all"||x.lang===plLang)&&(plSec==="all"||x.section===plSec));
   const nEn=PL.filter(x=>x.lang==="en").length,nAr=PL.filter(x=>x.lang==="ar").length;
-  let h=`<p class="eyebrow">Complete, free series on YouTube</p><h1>Courses & playlists</h1><p class="lede" style="max-width:64ch">${PL.length} full lecture series you can follow from the first video to the last: ${nEn} in English and ${nAr} in Arabic. Pick one per subject and finish it; do not collect them.</p>
-  <div class="filter" id="plLang">${[["all","All languages"],["en","English"],["ar","Arabic"]].map(([k,l])=>`<button data-k="${k}" aria-pressed="${plLang===k}">${l}</button>`).join("")}</div>
+  let h=`<p class="eyebrow">Complete, free series on YouTube</p><h1>Courses & playlists</h1><p class="lede" style="max-width:64ch">${PL.length} full lecture series you can follow from the first video to the last${nAr?`: ${nEn} in English and ${nAr} in Arabic`:""}. Pick one per subject and finish it; do not collect them.</p>
+  <div class="filter" id="plLang">${[["all","All languages"],...[...new Set(PL.map(x=>x.lang))].map(k=>[k,LANG[k]||k])].map(([k,l])=>`<button data-k="${k}" aria-pressed="${plLang===k}">${l}</button>`).join("")}</div>
   <div class="filter" id="plSec" style="margin-top:8px"><button data-k="all" aria-pressed="${plSec==="all"}">All subjects</button>${secs.map(sx=>`<button data-k="${sx.id}" aria-pressed="${plSec===sx.id}">${esc(sx.title)}</button>`).join("")}</div>`;
   const groups=secs.filter(sx=>list.some(x=>x.section===sx.id));
   h+=groups.length?groups.map((sx,i)=>`<h2 id="pl-${sx.id}"><span class="sn">${pad(i+1)}</span>${esc(sx.title)}</h2>${plList(list.filter(x=>x.section===sx.id))}`).join(""):`<p class="empty">No courses match these filters.</p>`;
@@ -496,6 +522,85 @@ function timetablePage(){
   h+=PH.map((p,i)=>p.tt?`<h2 id="tt-${i}"><span class="sn">${p.badge?esc(p.badge):pad(i+1)}</span>${esc(p.title)}${i===cp?' <span class="lang ar">You are here</span>':""}</h2><p class="empty" style="margin-top:-6px">${esc(p.tt.total)} · ${esc(p.goal)}</p>${ttHtml(p)}`:"").join("");
   const toc=PH.map((p,i)=>p.tt?["tt-"+i,p.short]:null).filter(Boolean);
   return{crumb:`<a href="#">${esc(CONFIG.short)}</a> / Daily timetable`,wide:false,toc,html:h,after(){const el=document.getElementById("tt-"+cp);if(el&&location.hash==="#timetable")el.scrollIntoView({block:"start"})}};
+}
+
+function tracksPage(){
+  const card=k=>{const t=TR.list[k];return `<div class="trk ${track===k?"on":""}"><span class="eyebrow" style="margin:0">${esc(t.tag)}</span><b>${esc(t.label)}</b><p>${esc(t.desc)}</p><ol>${t.order.map(i=>`<li>${esc(PH[i].title)}</li>`).join("")}</ol>${track===k?`<span class="lang ar">Your track</span>`:`<button data-k="${k}" class="trkbtn">Switch to ${esc(t.label)}</button>`}</div>`};
+  return{crumb:`<a href="#">${esc(CONFIG.short)}</a> / Floor & Ceiling`,wide:false,toc:[],html:`<p class="eyebrow">Two ways through the same atlas</p><h1>Floor & Ceiling</h1><p class="lede" style="max-width:64ch">${esc(TR.intro)}</p><div class="trks">${Object.keys(TR.list).map(card).join("")}</div><p class="empty">Switching never loses progress. It changes the order of My path, the Continue card and Today.</p>`,
+   after(){document.querySelectorAll(".trkbtn").forEach(b=>b.onclick=()=>setTrack(b.dataset.k))}};
+}
+function todayPage(){
+  const id=nextCore();if(!id)return{crumb:"Today",wide:false,toc:[],html:`<h1>Today</h1><p class="lede">You've finished your track. Pick an optional phase or a capstone.</p>`};
+  const t=T[id],p=PH[t.ph],tt=p.tt;const L0=t.lectures[0],R0=t.papers[0]||t.reads[0],R1=t.reads[0]&&t.reads[0]!==R0?t.reads[0]:null,P0=t.projects[0];
+  const lk=r=>r?`<a href="${esc(r.u)}" target="_blank" rel="noopener">${esc(r.t)}</a> <span class="muted">(${esc(r.by)})</span>`:"";
+  const rows=[["Warm-up",20,"One coding problem, or review yesterday's notes."],["Watch",45,L0?`${lk(L0)}. Watch one lecture or one section, taking notes.`:"Read the topic's key ideas and the first source."],["Read",45,R0?`${lk(R0)}. Read the relevant part slowly.${R1?` If time: ${lk(R1)}.`:""}`:"Re-read the key ideas and write them in your own words."],["Build",60,P0?`<b>${esc(P0.n)}</b>: ${esc(P0.d)} Do the first step today.`:"Work on the phase milestone."],["Wrap-up",10,"Write a short note: what you learned, one open question, the next step. Mark the topic done only when you can explain its four key ideas."]];
+  const total=rows.reduce((a,r)=>a+r[1],0);const i=CORE.indexOf(id);const next=CORE.slice(i+1,i+4);
+  const html=`<p class="eyebrow">${new Date().toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"})} · ${TR?esc(TR.list[track].label)+" track · ":""}${esc(p.title)}</p><h1>Today: ${t.num} ${esc(t.title)}</h1><p class="lede">${esc(t.why)}</p>
+  <table class="tt"><thead><tr><th>Block</th><th>Min</th><th>What to do</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r[0]}</td><td class="n">${r[1]}</td><td>${r[2]}</td></tr>`).join("")}<tr class="tot"><td>Total</td><td class="n">${total}</td><td>about 3 hours; split across the day if you need to</td></tr></tbody></table>
+  <h2 id="ideas"><span class="sn">01</span>The four ideas to understand today</h2><ol class="ideas prose">${t.ideas.map(x=>`<li><span>${esc(x)}</span></li>`).join("")}</ol>
+  <p style="margin-top:18px"><a class="pp-open" href="#t-${id}">Open the full topic page →</a></p>
+  <h2 id="next"><span class="sn">02</span>Coming next</h2><ul class="list">${next.map(n=>`<li><a href="#t-${n}"><span class="t">${T[n].num} ${esc(T[n].title)}</span><span class="b">${esc(T[n].why)}</span><span class="d">${hrs(T[n].mins)}</span></a></li>`).join("")}</ul>
+  <p class="empty">A topic usually takes several days. Today's page stays on it until you mark it done; then it moves on.</p>`;
+  return{crumb:`<a href="#">${esc(CONFIG.short)}</a> / Today`,wide:false,toc:[],html};
+}
+
+// ---- Knowledge tree: zoomable, pannable, collapsible hierarchy with dependency overlay
+var treeOpen=treeOpen||store.get(K+".treeOpen",null),treeSel=treeSel||null,treeView=treeView||null;
+function treeData(){
+  const seq=[...phOrder(),...PH.map((_,i)=>i).filter(i=>!phOrder().includes(i))];
+  return {id:"root",label:CONFIG.title,kids:seq.map(i=>({id:"p"+i,label:(PH[i].badge||("Phase "+(seq.indexOf(i)+1)))+" · "+PH[i].title,ph:i,kids:DATA.chapters.map((c,ci)=>({c,ci})).filter(x=>x.c.phase===i).map(({c,ci})=>({id:"c"+ci,label:c.title,kids:c.topics.map(t=>({id:"t-"+t.id,tid:t.id,label:T[t.id].num+" "+T[t.id].title}))}))}))};
+}
+function treePage(){
+  const html=`<p class="eyebrow">How everything connects</p><h1>Knowledge tree</h1><p class="lede" style="max-width:68ch">The whole atlas as one tree: phases branch into chapters, chapters into topics. Click a phase or chapter to fold or unfold it. Click a topic to see what it needs (solid lines) and what it unlocks (dashed). Scroll or pinch to zoom, drag to move.</p>
+  <div class="tree-tools"><button id="tz-in" aria-label="Zoom in">+</button><button id="tz-out" aria-label="Zoom out">−</button><button id="tz-fit">Fit</button><button id="tz-all">Expand all</button><button id="tz-none">Collapse all</button><button id="tz-cur">My current phase</button><span class="tree-hint" id="tree-info">Click a topic</span></div>
+  <div class="tree-wrap" id="treeWrap"><svg id="treeSvg" class="tree-svg"><g id="treeG"></g></svg></div>`;
+  return{crumb:`<a href="#">${esc(CONFIG.short)}</a> / Knowledge tree`,wide:true,toc:[],html,after:treeInit};
+}
+function treeInit(){
+  const svg=$("#treeSvg"),g=$("#treeG"),wrap=$("#treeWrap");if(!svg)return;
+  const data=treeData();
+  if(!treeOpen){treeOpen={root:true};treeOpen["p"+curPhase()]=true;DATA.chapters.forEach((c,ci)=>{if(c.phase===curPhase())treeOpen["c"+ci]=true})}
+  const save=()=>store.set(K+".treeOpen",treeOpen);
+  const DX=290,DY=26,W=270;
+  function layout(){
+    const nodes=[],links=[];let row=0;
+    (function walk(n,d,parent){const open=n.kids&&treeOpen[n.id];const me={n,d,x:d*DX,y:0,open,parent};nodes.push(me);
+      if(open&&n.kids.length){const ch=n.kids.map(k=>walk(k,d+1,me));me.y=(ch[0].y+ch[ch.length-1].y)/2;ch.forEach(c=>links.push([me,c]))}else{me.y=row*DY;row++}
+      return me})(data,0,null);
+    return{nodes,links,h:row*DY};
+  }
+  function draw(){
+    const {nodes,links,h}=layout();const pos={};nodes.forEach(x=>{if(x.n.tid)pos[x.n.tid]=x});
+    let s="";
+    links.forEach(([a,b])=>{const x1=a.x+W,y1=a.y,x2=b.x,y2=b.y,mx=(x1+x2)/2;s+=`<path class="tl" d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}"/>`});
+    if(treeSel&&pos[treeSel]){const me=pos[treeSel];
+      T[treeSel].pre.forEach(p=>{const a=pos[p];if(a)s+=`<path class="td pre" d="M${a.x+W},${a.y} C${a.x+W+120},${a.y} ${me.x-120},${me.y} ${me.x},${me.y}"/>`});
+      (unlocks[treeSel]||[]).forEach(u=>{const b=pos[u];if(b)s+=`<path class="td unl" d="M${me.x+W},${me.y} C${me.x+W+120},${me.y} ${b.x-120},${b.y} ${b.x},${b.y}"/>`});}
+    nodes.forEach(x=>{const n=x.n,isT=!!n.tid,hasK=n.kids&&n.kids.length;const cls=["tn",isT?"topic":"grp",isT&&done[n.tid]?"done":"",n.tid===treeSel?"sel":"",treeSel&&isT&&(T[treeSel].pre.includes(n.tid))?"pre":"",treeSel&&isT&&(unlocks[treeSel]||[]).includes(n.tid)?"unl":""].join(" ");
+      const lab=n.label.length>40?n.label.slice(0,38)+"…":n.label;
+      s+=`<g class="${cls}" data-id="${n.id}" transform="translate(${x.x},${x.y})"><rect x="0" y="-10" width="${W}" height="20" rx="5"/>${hasK?`<text class="tg" x="8" y="4">${x.open?"−":"+"}</text>`:""}<text x="${hasK?22:10}" y="4">${esc(lab)}</text>${isT&&done[n.tid]?`<text class="tk" x="${W-14}" y="4">✓</text>`:""}</g>`});
+    g.innerHTML=s;
+    g.querySelectorAll(".tn").forEach(el=>el.onclick=ev=>{ev.stopPropagation();const id=el.dataset.id;
+      if(id.startsWith("t-")){const tid=id.slice(2);if(treeSel===tid){location.hash="t-"+tid;return}treeSel=tid;const t=T[tid];$("#tree-info").innerHTML=`<b>${t.num} ${esc(t.title)}</b> · needs ${t.pre.length} · unlocks ${(unlocks[tid]||[]).length} · <a href="#t-${tid}">open topic →</a> (or click it again)`;draw()}
+      else{treeOpen[id]=!treeOpen[id];save();draw()}});
+    return h;
+  }
+  // zoom & pan
+  let v=treeView||{k:1,x:20,y:40};const apply=()=>{g.setAttribute("transform",`translate(${v.x},${v.y}) scale(${v.k})`);treeView=v};
+  const zoomAt=(f,cx,cy)=>{const k=Math.min(3,Math.max(.2,v.k*f));v.x=cx-(cx-v.x)*k/v.k;v.y=cy-(cy-v.y)*k/v.k;v.k=k;apply()};
+  const fit=()=>{const b=g.getBBox();const W0=wrap.clientWidth,H0=wrap.clientHeight;const k=Math.min(1.2,Math.max(.2,Math.min(W0/(b.width+40),H0/(b.height+40))));v={k,x:20-b.x*k,y:20-b.y*k};apply()};
+  wrap.addEventListener("wheel",e=>{e.preventDefault();const r=wrap.getBoundingClientRect();zoomAt(e.deltaY<0?1.12:1/1.12,e.clientX-r.left,e.clientY-r.top)},{passive:false});
+  const pts=new Map();let last=null,pinch=null;
+  wrap.addEventListener("pointerdown",e=>{pts.set(e.pointerId,[e.clientX,e.clientY]);if(pts.size===1)last=[e.clientX,e.clientY];if(pts.size===2){const [a,b]=[...pts.values()];pinch=Math.hypot(a[0]-b[0],a[1]-b[1])}});
+  wrap.addEventListener("pointermove",e=>{if(!pts.has(e.pointerId))return;pts.set(e.pointerId,[e.clientX,e.clientY]);
+    if(pts.size===2&&pinch){const [a,b]=[...pts.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);const r=wrap.getBoundingClientRect();zoomAt(d/pinch,(a[0]+b[0])/2-r.left,(a[1]+b[1])/2-r.top);pinch=d}
+    else if(pts.size===1&&last){v.x+=e.clientX-last[0];v.y+=e.clientY-last[1];last=[e.clientX,e.clientY];apply()}});
+  const up=e=>{pts.delete(e.pointerId);if(pts.size<2)pinch=null;if(!pts.size)last=null};wrap.addEventListener("pointerup",up);wrap.addEventListener("pointercancel",up);wrap.addEventListener("pointerleave",up);
+  $("#tz-in").onclick=()=>zoomAt(1.25,wrap.clientWidth/2,wrap.clientHeight/2);$("#tz-out").onclick=()=>zoomAt(.8,wrap.clientWidth/2,wrap.clientHeight/2);$("#tz-fit").onclick=fit;
+  const setAll=o=>{treeOpen={root:true};if(o){data.kids.forEach(p=>{treeOpen[p.id]=true;p.kids.forEach(c=>treeOpen[c.id]=true)})}save();draw();fit()};
+  $("#tz-all").onclick=()=>setAll(true);$("#tz-none").onclick=()=>setAll(false);
+  $("#tz-cur").onclick=()=>{treeOpen={root:true};treeOpen["p"+curPhase()]=true;DATA.chapters.forEach((c,ci)=>{if(c.phase===curPhase())treeOpen["c"+ci]=true});save();draw();fit()};
+  draw();if(treeView)apply();else fit();
 }
 </script>
 </body></html>
